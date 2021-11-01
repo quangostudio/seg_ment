@@ -1,0 +1,7 @@
+fastapi==0.70.0
+uvicorn
+pydantic
+starlette
+# pillow==0.15.0
+iglovikov_helper_functions
+cloths_segmentation
