@@ -1,0 +1,10 @@
+version: "3.6"
+services:
+  app:
+    image: quanbd123/quangostudio:v1
+    ports:
+        - "${PUBLIC_PORT}:${DEPLOY_PORT}"
+    restart: unless-stopped
+    environment:
+        PORT: ${DEPLOY_PORT}
+        DEPLOY_PORT: "18.224.154.80"
