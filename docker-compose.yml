@@ -1,7 +1,7 @@
 version: "3.6"
 services:
   app:
-    image: quanbd123/quangostudio:v1
+    image: quanbd123/seg_ment_beauty_tranfer:v1
     ports:
         - "${PUBLIC_PORT}:${DEPLOY_PORT}"
     restart: unless-stopped
