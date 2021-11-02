@@ -5,3 +5,4 @@ starlette
 # pillow==0.15.0
 iglovikov_helper_functions
 cloths_segmentation
+tensorflow==1.15.0

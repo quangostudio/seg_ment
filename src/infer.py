@@ -1,3 +1,4 @@
+import tensorflow as tf
 import numpy as np
 from PIL import Image
 import configparser
@@ -9,6 +10,8 @@ from iglovikov_helper_functions.utils.image_utils import load_rgb, pad, unpad
 from iglovikov_helper_functions.dl.pytorch.utils import tensor_from_rgb_image
 from cloths_segmentation.pre_trained_models import create_model
 import albumentations as albu
+from imageio import imread
+
 sys.path.append('../')
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 config = configparser.ConfigParser()
@@ -17,12 +20,38 @@ config.read('config.ini')
 class Process(object):
     def __init__(self):
         super().__init__()
-        # self._model = Model("./src/model/checkpoints/jpp.pb",
-        #             "./src/model/checkpoints/gmm.pth", 
-        #             "./src/model/checkpoints/tom.pth", use_cuda=False)
         self._width = config.getint("IMAGE", "width")
         self._height = config.getint("IMAGE", "heigth")
         self._model_seg = create_model("Unet_2020-10-30")
+        self.batch_size = 1
+        self.img_size = 256
+    
+    def preprocess(self, img):
+        return (img / 255. - 0.5) * 2
+
+    def deprocess(self, img):
+        return (img + 1) / 2
+    
+    def _inference(self, img, img_makeup):
+        no_makeup = cv2.resize(img, (self.img_size, self.img_size))
+        X_img = np.expand_dims(self.preprocess(no_makeup), 0)
+        tf.reset_default_graph()
+        sess = tf.Session()
+        sess.run(tf.global_variables_initializer())
+
+        saver = tf.train.import_meta_graph(os.path.join('model', 'model.meta'))
+        saver.restore(sess, tf.train.latest_checkpoint('model'))
+
+        graph = tf.get_default_graph()
+        X = graph.get_tensor_by_name('X:0')
+        Y = graph.get_tensor_by_name('Y:0')
+        Xs = graph.get_tensor_by_name('generator/xs:0')
+
+        makeup = cv2.resize(img_makeup, (self.img_size, self.img_size))
+        Y_img = np.expand_dims(self.preprocess(makeup), 0)
+        Xs_ = sess.run(Xs, feed_dict={X: X_img, Y: Y_img})
+        Xs_ = self.deprocess(Xs_)
+        return Xs_[0]
 
     def _process(self, image):
         image = image.resize((self._width, self._height), Image.BILINEAR)
